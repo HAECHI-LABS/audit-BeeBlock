@@ -48,13 +48,14 @@ abstract contract ERC20Lockable is ERC20, Ownable {
 
     function unlock(address from, uint256 idx) external returns(bool success){
         require(_locks[from][idx].due < block.timestamp,"ERC20Lockable/unlock: cannot unlock before due");
-        _unlock(from, idx);
+        return _unlock(from, idx);
     }
 
     function unlockAll(address from) external returns (bool success) {
-        for(uint256 i = 0; i < _locks[from].length; i++){
-            if(_locks[from][i].due < block.timestamp){
-                if(_unlock(from, i)){
+        for(uint256 i = 0; i < _locks[from].length;){
+            i++;
+            if(_locks[from][i - 1].due < block.timestamp){
+                if(_unlock(from, i - 1)){
                     i--;
                 }
             }
@@ -67,8 +68,9 @@ abstract contract ERC20Lockable is ERC20, Ownable {
     onlyOwner
     returns (bool success)
     {
-        for(uint256 i = 0; i < _locks[from].length; i++){
-            if(_unlock(from, i)){
+        for(uint256 i = 0; i < _locks[from].length;){
+            i++;
+            if(_unlock(from, i - 1)){
                 i--;
             }
         }

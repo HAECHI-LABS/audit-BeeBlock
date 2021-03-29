@@ -8,6 +8,7 @@ import "../library/Pausable.sol";
 abstract contract ERC20Mintable is ERC20, Pausable {
     event Mint(address indexed receiver, uint256 amount);
     event MintFinished();
+    uint256 internal _cap;
 
     bool internal _mintingFinished;
     ///@notice mint token
@@ -21,6 +22,10 @@ abstract contract ERC20Mintable is ERC20, Pausable {
         require(
             receiver != address(0),
             "ERC20Mintable/mint : Should not mint to zero address"
+        );
+        require(
+            _totalSupply + amount <= _cap,
+            "ERC20Mintable/mint : Cannot mint over cap"
         );
         require(
             !_mintingFinished,
@@ -45,6 +50,14 @@ abstract contract ERC20Mintable is ERC20, Pausable {
         _mintingFinished = true;
         emit MintFinished();
         return true;
+    }
+
+    function cap()
+        external
+        view
+        returns (uint256)
+    {
+        return _cap;
     }
 
     function isFinished() external view returns(bool finished) {

@@ -4,7 +4,7 @@ pragma solidity 0.8.0;
 
 abstract contract ERC20 {
 
-    uint256 private _totalSupply;
+    uint256 internal _totalSupply;
     mapping(address => uint256) internal _balances;
     mapping(address => mapping(address => uint256)) internal _allowances;
 
@@ -45,16 +45,6 @@ abstract contract ERC20 {
         _totalSupply = _totalSupply + amount;
         _balances[recipient] = _balances[recipient] + amount;
         emit Transfer(address(0), recipient, amount);
-        success = true;
-    }
-
-    function _burn(address burned, uint256 amount)
-        internal
-        returns (bool success)
-    {
-        _balances[burned] = _balances[burned] - amount;
-        _totalSupply = _totalSupply - amount;
-        emit Transfer(burned, address(0), amount);
         success = true;
     }
 

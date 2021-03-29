@@ -3,23 +3,22 @@
 pragma solidity 0.8.0;
 
 import "./erc20/ERC20Lockable.sol";
-import "./erc20/ERC20Burnable.sol";
 import "./erc20/ERC20Mintable.sol";
 import "./library/Pausable.sol";
 import "./library/Freezable.sol";
 
-contract SampleToken is
+contract Beeblock is
     ERC20Lockable,
-    ERC20Burnable,
     ERC20Mintable,
     Freezable
 {
-    string constant private _name = "SAMPLE";
-    string constant private _symbol = "SAM";
+    string constant private _name = "Beeblock";
+    string constant private _symbol = "BUZ";
     uint8 constant private _decimals = 18;
-    uint256 constant private _initial_supply = 1_000_000_000;
+    uint256 constant private _initial_supply = 200_000_000;
 
     constructor() Ownable() {
+        _cap = 900_000_000 * (10**uint256(_decimals));
         _mint(msg.sender, _initial_supply * (10**uint256(_decimals)));
     }
 
@@ -33,7 +32,7 @@ contract SampleToken is
     {
         require(
             to != address(0),
-            "SAM/transfer : Should not send to zero address"
+            "BUZ/transfer : Should not send to zero address"
         );
         _transfer(msg.sender, to, amount);
         success = true;
@@ -49,7 +48,7 @@ contract SampleToken is
     {
         require(
             to != address(0),
-            "SAM/transferFrom : Should not send to zero address"
+            "BUZ/transferFrom : Should not send to zero address"
         );
         _transfer(from, to, amount);
         _approve(
@@ -67,7 +66,7 @@ contract SampleToken is
     {
         require(
             spender != address(0),
-            "SAM/approve : Should not approve zero address"
+            "BUZ/approve : Should not approve zero address"
         );
         _approve(msg.sender, spender, amount);
         success = true;
