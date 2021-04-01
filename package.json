@@ -1,7 +1,7 @@
 {
-  "name": "staby",
+  "name": "beeblock",
   "version": "1.0.0",
-  "description": "staby smart contract repository",
+  "description": "beeblock smart contract repository",
   "main": "index.js",
   "scripts": {
     "compile": "npx truffle compile",
