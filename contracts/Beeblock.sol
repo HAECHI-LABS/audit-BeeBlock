@@ -2,66 +2,73 @@
 
 pragma solidity 0.8.0;
 
-import "./erc20/ERC20Lockable.sol";
-import "./erc20/ERC20Mintable.sol";
-import "./library/Pausable.sol";
+import "./KIP7/KIP7Lockable.sol";
+import "./KIP7/KIP7Mintable.sol";
+import "./interfaces/IKIP7Metadata.sol";
+import "./library/KIP7Pausable.sol";
 import "./library/Freezable.sol";
+import "./library/Address.sol";
 
 contract Beeblock is
-    ERC20Lockable,
-    ERC20Mintable,
+    KIP7Lockable,
+    KIP7Mintable,
+    IKIP7Metadata,
     Freezable
 {
+    using Address for address;
+
+    bytes4 private constant _KIP7_RECEIVED = 0x9d188c22;
     string constant private _name = "Beeblock";
     string constant private _symbol = "BUZ";
     uint8 constant private _decimals = 18;
     uint256 constant private _initial_supply = 200_000_000;
 
     constructor() Ownable() {
+        _registerInterface(type(IKIP7Metadata).interfaceId);
         _cap = 900_000_000 * (10**uint256(_decimals));
         _mint(msg.sender, _initial_supply * (10**uint256(_decimals)));
     }
 
-    function transfer(address to, uint256 amount)
+    function transfer(address recipient, uint256 amount)
         override
-        external
+        public
         whenNotFrozen(msg.sender)
         whenNotPaused
         checkLock(msg.sender, amount)
         returns (bool success)
     {
         require(
-            to != address(0),
+            recipient != address(0),
             "BUZ/transfer : Should not send to zero address"
         );
-        _transfer(msg.sender, to, amount);
+        _transfer(msg.sender, recipient, amount);
         success = true;
     }
 
-    function transferFrom(address from, address to, uint256 amount)
+    function transferFrom(address sender, address recipient, uint256 amount)
         override
-        external
-        whenNotFrozen(from)
+        public
+        whenNotFrozen(sender)
         whenNotPaused
-        checkLock(from, amount)
+        checkLock(sender, amount)
         returns (bool success)
     {
         require(
-            to != address(0),
+            recipient != address(0),
             "BUZ/transferFrom : Should not send to zero address"
         );
-        _transfer(from, to, amount);
+        _transfer(sender, recipient, amount);
         _approve(
-            from,
+            sender,
             msg.sender,
-            _allowances[from][msg.sender] - amount
+            _allowances[sender][msg.sender] - amount
         );
         success = true;
     }
 
     function approve(address spender, uint256 amount)
         override
-        external
+        public
         returns (bool success)
     {
         require(
@@ -82,5 +89,34 @@ contract Beeblock is
 
     function decimals() override external pure returns (uint8 tokenDecimals) {
         tokenDecimals = _decimals;
+    }
+
+    function safeTransfer(address recipient, uint256 amount, bytes memory data) public override {
+        transfer(recipient, amount);
+        require(_checkOnKIP7Received(msg.sender, recipient, amount, data), "KIP7: transfer to non KIP7Receiver implementer");
+    }
+
+    function safeTransfer(address recipient, uint256 amount) public override {
+        safeTransfer(recipient, amount, "");
+    }
+
+    function safeTransferFrom(address sender, address recipient, uint256 amount, bytes memory data) public override {
+        transferFrom(sender, recipient, amount);
+        require(_checkOnKIP7Received(sender, recipient, amount, data), "KIP7: transfer to non KIP7Receiver implementer");
+    }
+
+    function safeTransferFrom(address sender, address recipient, uint256 amount) public override {
+        safeTransferFrom(sender, recipient, amount, "");
+    }
+
+    function _checkOnKIP7Received(address sender, address recipient, uint256 amount, bytes memory _data)
+        internal returns (bool)
+    {
+        if (!recipient.isContract()) {
+            return true;
+        }
+
+        bytes4 retval = IKIP7Receiver(recipient).onKIP7Received(msg.sender, sender, amount, _data);
+        return (retval == _KIP7_RECEIVED);
     }
 }
